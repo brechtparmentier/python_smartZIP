@@ -1,5 +1,7 @@
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
+from tkinter.ttk import Button, Style
+
 import zipfile
 import os
 
@@ -45,16 +47,18 @@ def should_ignore(path):
         ".zip",          # Negeer .zip-bestanden
     ]
 
-    for item in ignore_list:
-        if item in path:
-            return True
-    return False
+    return any(ignore_item in path for ignore_item in ignore_list)
 
 # GUI-initialisatie
 root = tk.Tk()
 root.title("Mapcompressor")
 
-compress_button = tk.Button(root, text="Comprimeer Mappen", command=compress_folders)
+# Geef de GUI een modern thema
+style = Style()
+style.theme_use("clam")
+
+# Maak een knop met een modern uiterlijk
+compress_button = Button(root, text="Comprimeer Mappen", command=compress_folders)
 compress_button.pack(pady=20)
 
 root.mainloop()
