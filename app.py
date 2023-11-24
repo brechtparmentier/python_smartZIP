@@ -1,34 +1,23 @@
+import os
+import zipfile
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter.ttk import Button, Style
 
-import zipfile
-import os
+IGNORE_LIST = ["node_modules", "__pycache__", ".git", ".vscode", ".idea", ".zip"]
 
-# Functie om mappen te selecteren en te comprimeren
-def compress_folders():
-    folder_paths = filedialog.askopenfilenames(
-        title="Selecteer mappen om te comprimeren",
-        filetypes=(("Mappen", ""), ("Alle bestanden", "*.*")),
-        initialdir="/",  # Stel het beginpad in op /
-    )
+# Voeg de FOLDER_PATH variabele toe
+FOLDER_PATH = (
+    None  # U kunt hier een standaardpad instellen, of None laten om de GUI te gebruiken
+)
 
-    if folder_paths:
-        zip_filename = filedialog.asksaveasfilename(
-            defaultextension=".zip",
-            filetypes=[("ZIP-bestanden", "*.zip")]
-        )
+root = tk.Tk()  # Definieer root als een globale variabele
 
-        if zip_filename:
-            # Voeg de bestanden toe aan het ZIP-bestand
-            with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for folder_path in folder_paths:
-                    if not should_ignore(folder_path):
-                        add_folder_to_zip(zipf, folder_path)
 
-            messagebox.showinfo("Succes", f"{len(folder_paths)} mappen zijn gecomprimeerd naar {zip_filename}")
+def should_ignore(path):
+    return any(ignore_item in path for ignore_item in IGNORE_LIST)
 
-# Functie om mappen toe te voegen aan het ZIP-bestand
+
 def add_folder_to_zip(zipf, folder_path):
     for root, _, files in os.walk(folder_path):
         for file in files:
@@ -36,29 +25,35 @@ def add_folder_to_zip(zipf, folder_path):
             arcname = os.path.relpath(file_path, folder_path)
             zipf.write(file_path, arcname)
 
-# Functie om te controleren of een pad moet worden genegeerd
-def should_ignore(path):
-    ignore_list = [
-        "node_modules",  # Negeer node_modules-map
-        "__pycache__",   # Negeer __pycache__-map
-        ".git",          # Negeer .git-map
-        ".vscode",       # Negeer .vscode-map
-        ".idea",         # Negeer .idea-map
-        ".zip",          # Negeer .zip-bestanden
-    ]
 
-    return any(ignore_item in path for ignore_item in ignore_list)
+def compress_folders():
+    global FOLDER_PATH  # Gebruik de globale FOLDER_PATH variabele
+    folder_path = FOLDER_PATH or filedialog.askdirectory(
+        title="Selecteer een map om te comprimeren", initialdir=os.getcwd()
+    )
 
-# GUI-initialisatie
-root = tk.Tk()
-root.title("Mapcompressor")
+    if folder_path and not should_ignore(folder_path):
+        default_name = os.path.basename(folder_path)
+        zip_filename = filedialog.asksaveasfilename(
+            initialfile=default_name,
+            defaultextension=".zip",
+            filetypes=[("ZIP-bestanden", "*.zip")],
+        )
 
-# Geef de GUI een modern thema
-style = Style()
-style.theme_use("clam")
+        if zip_filename:
+            with zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
+                add_folder_to_zip(zipf, folder_path)
+            messagebox.showinfo("Succes", f"Map is gecomprimeerd naar {zip_filename}")
 
-# Maak een knop met een modern uiterlijk
-compress_button = Button(root, text="Comprimeer Mappen", command=compress_folders)
-compress_button.pack(pady=20)
 
-root.mainloop()
+def init_gui():
+    global root  # Gebruik de globale root variabele
+    root.title("Mapcompressor")
+    style = Style()
+    style.theme_use("clam")
+    Button(root, text="Comprimeer Map", command=compress_folders).pack(pady=20)
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    init_gui()
